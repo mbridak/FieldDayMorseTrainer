@@ -9,6 +9,7 @@ Michael.Bridak@gmail.com
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-out-of-order
 
+from email import message
 from pathlib import Path
 import os
 import subprocess
@@ -32,6 +33,10 @@ MY_CLASS = "1B"
 MY_SECTION = "ORG"
 MY_SPEED = 30
 
+# Globals for IPC
+message = ""
+responding = False
+
 
 def relpath(filename):
     """
@@ -54,44 +59,15 @@ def load_fonts_from_dir(directory):
     return families_set
 
 
-class MainWindow(QtWidgets.QMainWindow):
-    """Main Window"""
+class Ham(QRunnable):
+    def __init__(self, n):
+        super().__init__()
+        self.n = n
 
-    def __init__(self, parent=None):
-        """init the class"""
-        super().__init__(parent)
-        uic.loadUi(self.relpath("contest.ui"), self)
-        threadCount = QThreadPool.globalInstance().maxThreadCount()
-        print(f"{threadCount}")
-        self.message = ""
-        self.call_resolved = False
-        self.participants = None
-        self.spawn(MAX_CALLERS)
-        self.cq_pushButton.clicked.connect(self.send_cq)
-        self.report_pushButton.clicked.connect(self.send_report)
-        self.confirm_pushButton.clicked.connect(self.send_confirm)
-        self.agn_call_pushButton.clicked.connect(self.send_repeat_call)
-        self.agn_class_pushButton.clicked.connect(self.send_repeat_class)
-        self.agn_section_pushButton.clicked.connect(self.send_repeat_section)
-        self.callsign_lineEdit.textChanged.connect(self.call_to_upper)
-        self.class_lineEdit.textChanged.connect(self.class_to_upper)
-        self.section_lineEdit.textChanged.connect(self.section_to_upper)
-        self.section_lineEdit.returnPressed.connect(self.send_confirm)
-        self.side_tone = f"-f {SIDE_TONE}"
-        self.wpm = f"-w {MY_SPEED}"
-        self.vol = "-v 0.3"
-        self.responding = False
-
-    def spawn(self, people):
-        """spin up the people"""
-        for unused_variable in range(random.randint(1, people)):
-            self.participant = threading.Thread(
-                target=self.thread_function, args=(), daemon=True
-            )
-            self.participant.start()
-
-    def thread_function(self):
+    def run(self):
         """Simulated Field Day participant"""
+        global message
+        global responding
         current_state = "CQ"
         sent_call_timer = time.time()
         callsign = self.generate_callsign()
@@ -110,21 +86,21 @@ class MainWindow(QtWidgets.QMainWindow):
             delta = time.time() - sent_call_timer
             resend = False
 
-            if "DIE " in self.message:
+            if "DIE " in message:
                 break
 
             if current_state == "RESOLVINGCALL" and delta > 5:
                 resend = True
 
-            if self.message != answered_message or resend and not self.responding:
-                answered_message = self.message  # store timestamp
+            if message != answered_message or resend and not responding:
+                answered_message = message  # store timestamp
 
-                if "CQ " in self.message:
+                if "CQ " in message:
                     sent_call_timer = time.time()
                     current_state = "CQ"
 
                 if current_state == "CQ":  # Waiting for CQ call
-                    if "CQ " in self.message:  # different timestamp?
+                    if "CQ " in message:  # different timestamp?
                         time.sleep(0.1 * random.randint(1, 5))
                         command = f"{callsign}"
                         try:
@@ -135,11 +111,11 @@ class MainWindow(QtWidgets.QMainWindow):
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
-                        answered_message = self.message  # store timestamp
+                        answered_message = message  # store timestamp
                         current_state = "RESOLVINGCALL"
                         sent_call_timer = time.time()
 
-                if current_state == "RESOLVINGCALL" and "PARTIAL " in self.message:
+                if current_state == "RESOLVINGCALL" and "PARTIAL " in message:
                     error_level = self.run_ltest(
                         callsign, self.callsign_lineEdit.text()
                     )
@@ -170,7 +146,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         except subprocess.TimeoutExpired:
                             print("timeout")
 
-                if current_state == "RESOLVINGCALL" and "RESPONSE " in self.message:
+                if current_state == "RESOLVINGCALL" and "RESPONSE " in message:
                     error_level = self.run_ltest(
                         callsign, self.callsign_lineEdit.text()
                     )
@@ -199,7 +175,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             print("timeout")
 
                 if current_state == "CALLRESOLVED":
-                    if "RESPONSE " in self.message:
+                    if "RESPONSE " in message:
                         command = f"tu {klass} {section}"
                         try:
                             subprocess.run(
@@ -209,7 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
-                    if "RESENDCLASS" in self.message:
+                    if "RESENDCLASS" in message:
                         command = f"{klass} {klass}"
                         try:
                             subprocess.run(
@@ -219,7 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
-                    if "RESENDSECTION" in self.message:
+                    if "RESENDSECTION" in message:
                         command = f"{section} {section}"
                         try:
                             subprocess.run(
@@ -229,143 +205,13 @@ class MainWindow(QtWidgets.QMainWindow):
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
-                    if "QRZ" in self.message:
+                    if "QRZ" in message:
                         if (
                             self.class_lineEdit.text() == klass
                             and self.section_lineEdit.text() == section
                         ):
                             print("correct")
-
-            time.sleep(0.2)
-
-    def call_to_upper(self):
-        """Callsign text field to uppercase"""
-        self.callsign_lineEdit.setText(self.callsign_lineEdit.text().upper())
-
-    def class_to_upper(self):
-        """Class text field to uppercase"""
-        self.class_lineEdit.setText(self.class_lineEdit.text().upper())
-
-    def section_to_upper(self):
-        """Section text field to uppercase"""
-        self.section_lineEdit.setText(self.section_lineEdit.text().upper())
-
-    def send_cq(self):
-        """Send CQ FD"""
-        self.responding = True
-        command = f"CQ FD DE {MY_CALLSIGN}"
-        try:
-            subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
-                timeout=15,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            print("timeout")
-        self.message = f"CQ {time.clock_gettime(1)}"
-        self.responding = False
-
-    def send_report(self):
-        """Answer callers with their callsign"""
-        self.responding = True
-        call = self.callsign_lineEdit.text()
-        self.callsign_lineEdit.setText(call.upper())
-        self.log("-----??------")
-        command = f"{self.callsign_lineEdit.text()} {MY_CLASS} {MY_SECTION}"
-        try:
-            subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
-                timeout=15,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            print("timeout")
-        self.message = f"RESPONSE {time.clock_gettime(1)}"
-        self.responding = False
-
-    def send_repeat_call(self):
-        """Ask caller for his/her/non-binary call again"""
-        self.responding = True
-        command = f"{self.callsign_lineEdit.text()}"
-        try:
-            subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
-                timeout=15,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            print("timeout")
-        self.message = f"PARTIAL {time.clock_gettime(1)}"
-        self.responding = False
-
-    def send_repeat_class(self):
-        """Ask caller for class again"""
-        self.responding = True
-        command = "class?"
-        try:
-            subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
-                timeout=15,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            print("timeout")
-        self.message = f"RESENDCLASS {time.clock_gettime(1)}"
-        self.responding = False
-
-    def send_repeat_section(self):
-        """Ask caller for section"""
-        self.responding = True
-        command = "sect?"
-        try:
-            subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
-                timeout=15,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            print("timeout")
-        self.message = f"RESENDSECTION {time.clock_gettime(1)}"
-        self.responding = False
-
-    def send_confirm(self):
-        """Send equivilent of TU QRZ"""
-        self.message = f"QRZ {time.clock_gettime(1)}"
-        self.section_lineEdit.setText("")
-        self.class_lineEdit.setText("")
-        self.callsign_lineEdit.setText("")
-        self.callsign_lineEdit.setFocus()
-        self.call_resolved = False
-        self.message = "DIE "
-        self.responding = False
-        time.sleep(1)
-        self.message = ""
-        self.spawn(MAX_CALLERS)
-
-    def keyPressEvent(self, event):  # pylint: disable=invalid-name
-        """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
-        event_key = event.key()
-        if event_key == Qt.Key_F1:
-            self.send_cq()
-            return
-        if event_key == Qt.Key_F2:
-            self.send_report()
-            return
-        if event_key == Qt.Key_F3:
-            self.send_confirm()
-            return
-        if event_key == Qt.Key_F4:
-            self.send_repeat_call()
-            return
-        if event_key == Qt.Key_F5:
-            self.send_repeat_class()
-            return
-        if event_key == Qt.Key_F6:
-            self.send_repeat_section()
-            return
-        if event_key == Qt.Key_F7:
-            self.message = "DIE "
-            return
+            time.sleep(0.1)
 
     @staticmethod
     def generate_class():
@@ -459,19 +305,6 @@ class MainWindow(QtWidgets.QMainWindow):
         sections = call_areas[area].split()
         return sections[random.randint(0, len(sections) - 1)]
 
-    @staticmethod
-    def relpath(filename: str) -> str:
-        """
-        If the program is packaged with pyinstaller,
-        this is needed since all files will be in a temp
-        folder during execution.
-        """
-        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-            base_path = getattr(sys, "_MEIPASS")
-        else:
-            base_path = os.path.abspath(".")
-        return os.path.join(base_path, filename)
-
     def levenshtein(self, str1, str2):
         """This must be magic, This code block is all over github so it works then right?!?"""
         if len(str1) < len(str2):
@@ -498,6 +331,199 @@ class MainWindow(QtWidgets.QMainWindow):
         """Does it work?"""
         ltest = self.levenshtein(str1, str2)
         return float(ltest) / float(len(str1))
+
+    @staticmethod
+    def log(line: str) -> None:
+        """This is here because I'm too lazy to convert all the 'f' strings to %s crap."""
+        logging.info(line)
+
+
+class MainWindow(QtWidgets.QMainWindow):
+    """Main Window"""
+
+    def __init__(self, parent=None):
+        """init the class"""
+        super().__init__(parent)
+        global message
+        global responding
+        uic.loadUi(self.relpath("contest.ui"), self)
+        message = ""
+        self.call_resolved = False
+        self.participants = None
+        self.spawn(MAX_CALLERS)
+        self.cq_pushButton.clicked.connect(self.send_cq)
+        self.report_pushButton.clicked.connect(self.send_report)
+        self.confirm_pushButton.clicked.connect(self.send_confirm)
+        self.agn_call_pushButton.clicked.connect(self.send_repeat_call)
+        self.agn_class_pushButton.clicked.connect(self.send_repeat_class)
+        self.agn_section_pushButton.clicked.connect(self.send_repeat_section)
+        self.callsign_lineEdit.textChanged.connect(self.call_to_upper)
+        self.class_lineEdit.textChanged.connect(self.class_to_upper)
+        self.section_lineEdit.textChanged.connect(self.section_to_upper)
+        self.section_lineEdit.returnPressed.connect(self.send_confirm)
+        self.side_tone = f"-f {SIDE_TONE}"
+        self.wpm = f"-w {MY_SPEED}"
+        self.vol = "-v 0.3"
+        responding = False
+
+    def spawn(self, people):
+        """spin up the people"""
+        threadCount = QThreadPool.globalInstance().maxThreadCount()
+        if threadCount < MAX_CALLERS:
+            threadCount = MAX_CALLERS
+        pool = QThreadPool.globalInstance()
+        for i in range(threadCount):
+            ham = Ham(i)
+            pool.start(ham)
+
+    def call_to_upper(self):
+        """Callsign text field to uppercase"""
+        self.callsign_lineEdit.setText(self.callsign_lineEdit.text().upper())
+
+    def class_to_upper(self):
+        """Class text field to uppercase"""
+        self.class_lineEdit.setText(self.class_lineEdit.text().upper())
+
+    def section_to_upper(self):
+        """Section text field to uppercase"""
+        self.section_lineEdit.setText(self.section_lineEdit.text().upper())
+
+    def send_cq(self):
+        global message, responding
+        """Send CQ FD"""
+        responding = True
+        command = f"CQ FD DE {MY_CALLSIGN}"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+        message = f"CQ {time.clock_gettime(1)}"
+        responding = False
+
+    def send_report(self):
+        global message, responding
+        """Answer callers with their callsign"""
+        responding = True
+        call = self.callsign_lineEdit.text()
+        self.callsign_lineEdit.setText(call.upper())
+        self.log("-----??------")
+        command = f"{self.callsign_lineEdit.text()} {MY_CLASS} {MY_SECTION}"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+        message = f"RESPONSE {time.clock_gettime(1)}"
+        responding = False
+
+    def send_repeat_call(self):
+        global message, responding
+        """Ask caller for his/her/non-binary call again"""
+        responding = True
+        command = f"{self.callsign_lineEdit.text()}"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+        message = f"PARTIAL {time.clock_gettime(1)}"
+        responding = False
+
+    def send_repeat_class(self):
+        global message, responding
+        """Ask caller for class again"""
+        responding = True
+        command = "class?"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+        message = f"RESENDCLASS {time.clock_gettime(1)}"
+        responding = False
+
+    def send_repeat_section(self):
+        global message, responding
+        """Ask caller for section"""
+        responding = True
+        command = "sect?"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+        message = f"RESENDSECTION {time.clock_gettime(1)}"
+        responding = False
+
+    def send_confirm(self):
+        global message, responding
+        """Send equivilent of TU QRZ"""
+        message = f"QRZ {time.clock_gettime(1)}"
+        self.section_lineEdit.setText("")
+        self.class_lineEdit.setText("")
+        self.callsign_lineEdit.setText("")
+        self.callsign_lineEdit.setFocus()
+        self.call_resolved = False
+        message = "DIE "
+        responding = False
+        time.sleep(1)
+        message = ""
+        self.spawn(MAX_CALLERS)
+
+    def keyPressEvent(self, event):  # pylint: disable=invalid-name
+        global message
+        """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
+        event_key = event.key()
+        if event_key == Qt.Key_F1:
+            self.send_cq()
+            return
+        if event_key == Qt.Key_F2:
+            self.send_report()
+            return
+        if event_key == Qt.Key_F3:
+            self.send_confirm()
+            return
+        if event_key == Qt.Key_F4:
+            self.send_repeat_call()
+            return
+        if event_key == Qt.Key_F5:
+            self.send_repeat_class()
+            return
+        if event_key == Qt.Key_F6:
+            self.send_repeat_section()
+            return
+        if event_key == Qt.Key_F7:
+            message = "DIE "
+            return
+
+    @staticmethod
+    def relpath(filename: str) -> str:
+        """
+        If the program is packaged with pyinstaller,
+        this is needed since all files will be in a temp
+        folder during execution.
+        """
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            base_path = getattr(sys, "_MEIPASS")
+        else:
+            base_path = os.path.abspath(".")
+        return os.path.join(base_path, filename)
 
     @staticmethod
     def log(line: str) -> None:
