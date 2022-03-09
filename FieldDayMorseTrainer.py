@@ -18,7 +18,7 @@ import threading
 import time
 import random
 from PyQt5.QtGui import QFontDatabase
-from PyQt5.QtCore import QDir, Qt
+from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtWidgets, uic
 
 
@@ -57,10 +57,12 @@ def load_fonts_from_dir(directory):
 class MainWindow(QtWidgets.QMainWindow):
     """Main Window"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent=None):
         """init the class"""
-        super().__init__(*args, **kwargs)
+        super().__init__(parent)
         uic.loadUi(self.relpath("contest.ui"), self)
+        threadCount = QThreadPool.globalInstance().maxThreadCount()
+        print(f"{threadCount}")
         self.message = ""
         self.call_resolved = False
         self.participants = None
@@ -78,6 +80,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.side_tone = f"-f {SIDE_TONE}"
         self.wpm = f"-w {MY_SPEED}"
         self.vol = "-v 0.3"
+        self.responding = False
 
     def spawn(self, people):
         """spin up the people"""
@@ -90,6 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def thread_function(self):
         """Simulated Field Day participant"""
         current_state = "CQ"
+        sent_call_timer = time.time()
         callsign = self.generate_callsign()
         klass = self.generate_class()
         section = self.generate_section(callsign)
@@ -103,14 +107,20 @@ class MainWindow(QtWidgets.QMainWindow):
         answered_message = False
 
         while True:
+            delta = time.time() - sent_call_timer
+            resend = False
 
             if "DIE " in self.message:
                 break
 
-            if self.message != answered_message:
+            if current_state == "RESOLVINGCALL" and delta > 5:
+                resend = True
+
+            if self.message != answered_message or resend and not self.responding:
                 answered_message = self.message  # store timestamp
 
                 if "CQ " in self.message:
+                    sent_call_timer = time.time()
                     current_state = "CQ"
 
                 if current_state == "CQ":  # Waiting for CQ call
@@ -127,6 +137,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             print("timeout")
                         answered_message = self.message  # store timestamp
                         current_state = "RESOLVINGCALL"
+                        sent_call_timer = time.time()
 
                 if current_state == "RESOLVINGCALL" and "PARTIAL " in self.message:
                     error_level = self.run_ltest(
@@ -175,6 +186,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             print("timeout")
                         current_state = "CALLRESOLVED"
                         self.call_resolved = True
+                        continue
                     elif not self.call_resolved and error_level < 0.5:  # could be me
                         command = f"de {callsign} {klass} {section}"
                         try:
@@ -223,11 +235,6 @@ class MainWindow(QtWidgets.QMainWindow):
                             and self.section_lineEdit.text() == section
                         ):
                             print("correct")
-                        callsign = self.generate_callsign()
-                        klass = self.generate_class()
-                        section = self.generate_section(callsign)
-                        self.message = ""
-                        current_state = "CQ"
 
             time.sleep(0.2)
 
@@ -245,6 +252,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_cq(self):
         """Send CQ FD"""
+        self.responding = True
         command = f"CQ FD DE {MY_CALLSIGN}"
         try:
             subprocess.run(
@@ -255,9 +263,11 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         self.message = f"CQ {time.clock_gettime(1)}"
+        self.responding = False
 
     def send_report(self):
         """Answer callers with their callsign"""
+        self.responding = True
         call = self.callsign_lineEdit.text()
         self.callsign_lineEdit.setText(call.upper())
         self.log("-----??------")
@@ -271,9 +281,11 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         self.message = f"RESPONSE {time.clock_gettime(1)}"
+        self.responding = False
 
     def send_repeat_call(self):
         """Ask caller for his/her/non-binary call again"""
+        self.responding = True
         command = f"{self.callsign_lineEdit.text()}"
         try:
             subprocess.run(
@@ -284,9 +296,11 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         self.message = f"PARTIAL {time.clock_gettime(1)}"
+        self.responding = False
 
     def send_repeat_class(self):
         """Ask caller for class again"""
+        self.responding = True
         command = "class?"
         try:
             subprocess.run(
@@ -297,9 +311,11 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         self.message = f"RESENDCLASS {time.clock_gettime(1)}"
+        self.responding = False
 
     def send_repeat_section(self):
         """Ask caller for section"""
+        self.responding = True
         command = "sect?"
         try:
             subprocess.run(
@@ -310,6 +326,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         self.message = f"RESENDSECTION {time.clock_gettime(1)}"
+        self.responding = False
 
     def send_confirm(self):
         """Send equivilent of TU QRZ"""
@@ -320,6 +337,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.callsign_lineEdit.setFocus()
         self.call_resolved = False
         self.message = "DIE "
+        self.responding = False
         time.sleep(1)
         self.message = ""
         self.spawn(MAX_CALLERS)
