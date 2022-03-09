@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Field Day Simulator"""
+"""
+Field Day Morse Simulator
+K6GTE
+Michael.Bridak@gmail.com
+"""
 
 # pylint: disable=c-extension-no-member
 # pylint: disable=no-name-in-module
