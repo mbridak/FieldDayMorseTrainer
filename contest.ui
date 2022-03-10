@@ -39,6 +39,9 @@
       <height>25</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
    </widget>
    <widget class="QPlainTextEdit" name="plainTextEdit">
     <property name="geometry">
@@ -62,6 +65,9 @@
       <height>25</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
    </widget>
    <widget class="QLineEdit" name="section_lineEdit">
     <property name="geometry">
@@ -71,6 +77,9 @@
       <width>113</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
    </widget>
    <widget class="QPushButton" name="report_pushButton">
