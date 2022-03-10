@@ -19,7 +19,7 @@ import time
 import random
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
 
 SIDE_TONE = 650
@@ -341,9 +341,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.agn_call_pushButton.clicked.connect(self.send_repeat_call)
         self.agn_class_pushButton.clicked.connect(self.send_repeat_class)
         self.agn_section_pushButton.clicked.connect(self.send_repeat_section)
-        self.callsign_lineEdit.textChanged.connect(self.call_to_upper)
-        self.class_lineEdit.textChanged.connect(self.class_to_upper)
-        self.section_lineEdit.textChanged.connect(self.section_to_upper)
+        self.callsign_lineEdit.textChanged.connect(self.call_changed)
+        self.callsign_lineEdit.textEdited.connect(self.call_test)
+        # self.class_lineEdit.textChanged.connect(self.class_to_upper)
+        self.class_lineEdit.textEdited.connect(self.class_test)
+        # self.section_lineEdit.textChanged.connect(self.section_to_upper)
+        self.section_lineEdit.textEdited.connect(self.section_test)
         self.section_lineEdit.returnPressed.connect(self.send_confirm)
         self.side_tone = f"-f {SIDE_TONE}"
         self.wpm = f"-w {MY_SPEED}"
@@ -361,19 +364,59 @@ class MainWindow(QtWidgets.QMainWindow):
             ham = Ham(i)
             pool.start(ham)
 
-    def call_to_upper(self):
+    def call_changed(self):
         """Callsign text field to uppercase"""
         global guessed_callsign
         guessed_callsign = self.callsign_lineEdit.text().upper()
-        self.callsign_lineEdit.setText(guessed_callsign)
+        # self.callsign_lineEdit.setText(guessed_callsign)
 
-    def class_to_upper(self):
-        """Class text field to uppercase"""
-        self.class_lineEdit.setText(self.class_lineEdit.text().upper())
+    def call_test(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.callsign_lineEdit.text()
+        if len(text):
+            if text[-1] == " ":
+                self.callsign_lineEdit.setText(text.strip())
+                self.class_lineEdit.setFocus()
+                self.class_lineEdit.deselect()
+            else:
+                washere = self.callsign_lineEdit.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.callsign_lineEdit.setText(cleaned)
+                self.callsign_lineEdit.setCursorPosition(washere)
 
-    def section_to_upper(self):
-        """Section text field to uppercase"""
-        self.section_lineEdit.setText(self.section_lineEdit.text().upper())
+    def class_test(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.class_lineEdit.text()
+        if len(text):
+            if text[-1] == " ":
+                self.class_lineEdit.setText(text.strip())
+                self.section_lineEdit.setFocus()
+                self.section_lineEdit.deselect()
+            else:
+                washere = self.class_lineEdit.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.class_lineEdit.setText(cleaned)
+                self.class_lineEdit.setCursorPosition(washere)
+
+    def section_test(self):
+        """
+        Test and strip class of bad characters, advance to next input field if space pressed.
+        """
+        text = self.section_lineEdit.text()
+        if len(text):
+            if text[-1] == " ":
+                self.section_lineEdit.setText(text.strip())
+                self.callsign_lineEdit.setFocus()
+                self.callsign_lineEdit.deselect()
+            else:
+                washere = self.section_lineEdit.cursorPosition()
+                cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                self.section_lineEdit.setText(cleaned)
+                self.section_lineEdit.setCursorPosition(washere)
 
     def reinsert_cq_message(self):
         """if no activity from OP callers resend calls"""
@@ -480,6 +523,28 @@ class MainWindow(QtWidgets.QMainWindow):
         """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
         global message
         event_key = event.key()
+        if event_key == Qt.Key_Escape:
+            self.section_lineEdit.setText("")
+            self.class_lineEdit.setText("")
+            self.callsign_lineEdit.setText("")
+            self.callsign_lineEdit.setFocus()
+            return
+        if event_key == Qt.Key_Tab:
+            if self.section_lineEdit.hasFocus():
+                self.callsign_lineEdit.setFocus()
+                self.callsign_lineEdit.deselect()
+                self.callsign_lineEdit.end(False)
+                return
+            if self.class_lineEdit.hasFocus():
+                self.section_lineEdit.setFocus()
+                self.section_lineEdit.deselect()
+                self.section_lineEdit.end(False)
+                return
+            if self.callsign_lineEdit.hasFocus():
+                self.class_lineEdit.setFocus()
+                self.class_lineEdit.deselect()
+                self.class_lineEdit.end(False)
+                return
         if event_key == Qt.Key_F1:
             self.send_cq()
             return
@@ -501,6 +566,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if event_key == Qt.Key_F12:
             message = "DIE "  # kill off the hams
             return
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        global message
+        message = "DIE "
+        time.sleep(1)
+        return super().closeEvent(a0)
 
     @staticmethod
     def relpath(filename: str) -> str:
