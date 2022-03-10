@@ -19,7 +19,7 @@ import time
 import random
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic
 
 
 SIDE_TONE = 650
@@ -348,7 +348,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.side_tone = f"-f {SIDE_TONE}"
         self.wpm = f"-w {MY_SPEED}"
         self.vol = "-v 0.3"
-        self.timer
+        self.resend_timer = QtCore.QTimer()
+        self.resend_timer.timeout.connect(self.reinsert_cq_message)
 
     def spawn(self, people):
         """spin up the people"""
@@ -374,9 +375,17 @@ class MainWindow(QtWidgets.QMainWindow):
         """Section text field to uppercase"""
         self.section_lineEdit.setText(self.section_lineEdit.text().upper())
 
-    def send_cq(self):
+    def reinsert_cq_message(self):
+        """if no activity from OP callers resend calls"""
         global message
+        message = f"CQ {time.clock_gettime(1)}"
+        pass
+
+    def send_cq(self):
         """Send CQ FD"""
+        self.resend_timer.stop()
+        self.resend_timer.timeout.connect(self.reinsert_cq_message)
+        global message
         command = f"CQ FD DE {MY_CALLSIGN}"
         try:
             subprocess.run(
@@ -387,10 +396,12 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"CQ {time.clock_gettime(1)}"
+        self.resend_timer.start(20000)
 
     def send_report(self):
-        global message, guessed_callsign
         """Answer callers with their callsign"""
+        self.resend_timer.stop()
+        global message, guessed_callsign
         guessed_callsign = self.callsign_lineEdit.text()
         self.callsign_lineEdit.setText(guessed_callsign.upper())
         command = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
@@ -405,8 +416,9 @@ class MainWindow(QtWidgets.QMainWindow):
         message = f"RESPONSE {time.clock_gettime(1)}"
 
     def send_repeat_call(self):
-        global message
         """Ask caller for his/her/non-binary call again"""
+        self.resend_timer.stop()
+        global message
         command = f"{self.callsign_lineEdit.text()}"
         try:
             subprocess.run(
@@ -419,8 +431,9 @@ class MainWindow(QtWidgets.QMainWindow):
         message = f"PARTIAL {time.clock_gettime(1)}"
 
     def send_repeat_class(self):
-        global message
         """Ask caller for class again"""
+        self.resend_timer.stop()
+        global message
         command = "class?"
         try:
             subprocess.run(
@@ -433,8 +446,9 @@ class MainWindow(QtWidgets.QMainWindow):
         message = f"RESENDCLASS {time.clock_gettime(1)}"
 
     def send_repeat_section(self):
-        global message
         """Ask caller for section"""
+        self.resend_timer.stop()
+        global message
         command = "sect?"
         try:
             subprocess.run(
@@ -447,8 +461,9 @@ class MainWindow(QtWidgets.QMainWindow):
         message = f"RESENDSECTION {time.clock_gettime(1)}"
 
     def send_confirm(self):
-        global message, guessed_callsign, call_resolved
         """Send equivilent of TU QRZ"""
+        self.resend_timer.stop()
+        global message, guessed_callsign, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
         self.section_lineEdit.setText("")
         self.class_lineEdit.setText("")
@@ -462,8 +477,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.spawn(MAX_CALLERS)
 
     def keyPressEvent(self, event):  # pylint: disable=invalid-name
-        global message
         """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
+        global message
         event_key = event.key()
         if event_key == Qt.Key_F1:
             self.send_cq()
