@@ -9,7 +9,6 @@ Michael.Bridak@gmail.com
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-out-of-order
 
-from email import message
 from pathlib import Path
 import os
 import subprocess
@@ -35,7 +34,8 @@ MY_SPEED = 30
 
 # Globals for IPC
 message = ""
-responding = False
+guessed_callsign = ""
+call_resolved = False
 
 
 def relpath(filename):
@@ -67,9 +67,8 @@ class Ham(QRunnable):
     def run(self):
         """Simulated Field Day participant"""
         global message
-        global responding
+        global call_resolved
         current_state = "CQ"
-        sent_call_timer = time.time()
         callsign = self.generate_callsign()
         klass = self.generate_class()
         section = self.generate_section(callsign)
@@ -83,20 +82,14 @@ class Ham(QRunnable):
         answered_message = False
 
         while True:
-            delta = time.time() - sent_call_timer
-            resend = False
 
             if "DIE " in message:
                 break
 
-            if current_state == "RESOLVINGCALL" and delta > 5:
-                resend = True
-
-            if message != answered_message or resend and not responding:
+            if message != answered_message:
                 answered_message = message  # store timestamp
 
                 if "CQ " in message:
-                    sent_call_timer = time.time()
                     current_state = "CQ"
 
                 if current_state == "CQ":  # Waiting for CQ call
@@ -113,12 +106,9 @@ class Ham(QRunnable):
                             print("timeout")
                         answered_message = message  # store timestamp
                         current_state = "RESOLVINGCALL"
-                        sent_call_timer = time.time()
 
                 if current_state == "RESOLVINGCALL" and "PARTIAL " in message:
-                    error_level = self.run_ltest(
-                        callsign, self.callsign_lineEdit.text()
-                    )
+                    error_level = self.run_ltest(callsign, guessed_callsign)
                     if error_level == 0.0:
                         command = "rr"
                         try:
@@ -130,11 +120,11 @@ class Ham(QRunnable):
                         except subprocess.TimeoutExpired:
                             print("timeout")
                         current_state = "CALLRESOLVED"
-                        self.call_resolved = True
+                        call_resolved = True
                     elif (
-                        not self.call_resolved
+                        not call_resolved
                         and error_level < 1.0
-                        or self.callsign_lineEdit.text() == "?"
+                        or guessed_callsign == "?"
                     ):
                         command = f"{callsign}"
                         try:
@@ -147,9 +137,7 @@ class Ham(QRunnable):
                             print("timeout")
 
                 if current_state == "RESOLVINGCALL" and "RESPONSE " in message:
-                    error_level = self.run_ltest(
-                        callsign, self.callsign_lineEdit.text()
-                    )
+                    error_level = self.run_ltest(callsign, guessed_callsign)
                     if error_level == 0.0:
                         command = f"tu {klass} {section}"
                         try:
@@ -161,9 +149,9 @@ class Ham(QRunnable):
                         except subprocess.TimeoutExpired:
                             print("timeout")
                         current_state = "CALLRESOLVED"
-                        self.call_resolved = True
+                        call_resolved = True
                         continue
-                    elif not self.call_resolved and error_level < 0.5:  # could be me
+                    elif not call_resolved and error_level < 0.5:  # could be me
                         command = f"de {callsign} {klass} {section}"
                         try:
                             subprocess.run(
@@ -211,7 +199,7 @@ class Ham(QRunnable):
                             and self.section_lineEdit.text() == section
                         ):
                             print("correct")
-            time.sleep(0.1)
+            time.sleep(0.1)  # Thisi is here just so CPU cores arn't 100%
 
     @staticmethod
     def generate_class():
@@ -344,11 +332,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         """init the class"""
         super().__init__(parent)
-        global message
-        global responding
         uic.loadUi(self.relpath("contest.ui"), self)
-        message = ""
-        self.call_resolved = False
         self.participants = None
         self.spawn(MAX_CALLERS)
         self.cq_pushButton.clicked.connect(self.send_cq)
@@ -364,7 +348,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.side_tone = f"-f {SIDE_TONE}"
         self.wpm = f"-w {MY_SPEED}"
         self.vol = "-v 0.3"
-        responding = False
+        self.timer
 
     def spawn(self, people):
         """spin up the people"""
@@ -378,7 +362,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def call_to_upper(self):
         """Callsign text field to uppercase"""
-        self.callsign_lineEdit.setText(self.callsign_lineEdit.text().upper())
+        global guessed_callsign
+        guessed_callsign = self.callsign_lineEdit.text().upper()
+        self.callsign_lineEdit.setText(guessed_callsign)
 
     def class_to_upper(self):
         """Class text field to uppercase"""
@@ -389,9 +375,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.section_lineEdit.setText(self.section_lineEdit.text().upper())
 
     def send_cq(self):
-        global message, responding
+        global message
         """Send CQ FD"""
-        responding = True
         command = f"CQ FD DE {MY_CALLSIGN}"
         try:
             subprocess.run(
@@ -402,16 +387,13 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"CQ {time.clock_gettime(1)}"
-        responding = False
 
     def send_report(self):
-        global message, responding
+        global message, guessed_callsign
         """Answer callers with their callsign"""
-        responding = True
-        call = self.callsign_lineEdit.text()
-        self.callsign_lineEdit.setText(call.upper())
-        self.log("-----??------")
-        command = f"{self.callsign_lineEdit.text()} {MY_CLASS} {MY_SECTION}"
+        guessed_callsign = self.callsign_lineEdit.text()
+        self.callsign_lineEdit.setText(guessed_callsign.upper())
+        command = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, command],
@@ -421,12 +403,10 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"RESPONSE {time.clock_gettime(1)}"
-        responding = False
 
     def send_repeat_call(self):
-        global message, responding
+        global message
         """Ask caller for his/her/non-binary call again"""
-        responding = True
         command = f"{self.callsign_lineEdit.text()}"
         try:
             subprocess.run(
@@ -437,12 +417,10 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"PARTIAL {time.clock_gettime(1)}"
-        responding = False
 
     def send_repeat_class(self):
-        global message, responding
+        global message
         """Ask caller for class again"""
-        responding = True
         command = "class?"
         try:
             subprocess.run(
@@ -453,12 +431,10 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"RESENDCLASS {time.clock_gettime(1)}"
-        responding = False
 
     def send_repeat_section(self):
-        global message, responding
+        global message
         """Ask caller for section"""
-        responding = True
         command = "sect?"
         try:
             subprocess.run(
@@ -469,21 +445,20 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"RESENDSECTION {time.clock_gettime(1)}"
-        responding = False
 
     def send_confirm(self):
-        global message, responding
+        global message, guessed_callsign, call_resolved
         """Send equivilent of TU QRZ"""
         message = f"QRZ {time.clock_gettime(1)}"
         self.section_lineEdit.setText("")
         self.class_lineEdit.setText("")
         self.callsign_lineEdit.setText("")
         self.callsign_lineEdit.setFocus()
-        self.call_resolved = False
+        call_resolved = False
         message = "DIE "
-        responding = False
         time.sleep(1)
         message = ""
+        guessed_callsign = ""
         self.spawn(MAX_CALLERS)
 
     def keyPressEvent(self, event):  # pylint: disable=invalid-name
@@ -508,8 +483,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if event_key == Qt.Key_F6:
             self.send_repeat_section()
             return
-        if event_key == Qt.Key_F7:
-            message = "DIE "
+        if event_key == Qt.Key_F12:
+            message = "DIE "  # kill off the hams
             return
 
     @staticmethod
