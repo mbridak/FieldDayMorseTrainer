@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>734</width>
-    <height>173</height>
+    <width>700</width>
+    <height>244</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="cq_pushButton">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>140</y>
+      <x>20</x>
+      <y>200</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -34,22 +34,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>100</y>
+      <y>160</y>
       <width>113</width>
       <height>25</height>
-     </rect>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
-    </property>
-   </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
-    <property name="geometry">
-     <rect>
-      <x>23</x>
-      <y>9</y>
-      <width>691</width>
-      <height>81</height>
      </rect>
     </property>
     <property name="focusPolicy">
@@ -60,7 +47,7 @@
     <property name="geometry">
      <rect>
       <x>160</x>
-      <y>100</y>
+      <y>160</y>
       <width>113</width>
       <height>25</height>
      </rect>
@@ -73,7 +60,7 @@
     <property name="geometry">
      <rect>
       <x>310</x>
-      <y>100</y>
+      <y>160</y>
       <width>113</width>
       <height>25</height>
      </rect>
@@ -85,8 +72,8 @@
    <widget class="QPushButton" name="report_pushButton">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>140</y>
+      <x>130</x>
+      <y>200</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -101,8 +88,8 @@
    <widget class="QPushButton" name="confirm_pushButton">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>140</y>
+      <x>240</x>
+      <y>200</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -117,8 +104,8 @@
    <widget class="QPushButton" name="agn_call_pushButton">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>140</y>
+      <x>350</x>
+      <y>200</y>
       <width>86</width>
       <height>26</height>
      </rect>
@@ -133,8 +120,8 @@
    <widget class="QPushButton" name="agn_class_pushButton">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>140</y>
+      <x>460</x>
+      <y>200</y>
       <width>86</width>
       <height>26</height>
      </rect>
@@ -149,8 +136,8 @@
    <widget class="QPushButton" name="agn_section_pushButton">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>140</y>
+      <x>570</x>
+      <y>200</y>
       <width>86</width>
       <height>26</height>
      </rect>
@@ -160,6 +147,22 @@
     </property>
     <property name="text">
      <string>F6: SECT?</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="log_listWidget">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>661</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="alternatingRowColors">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>

@@ -9,6 +9,7 @@ Michael.Bridak@gmail.com
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-out-of-order
 
+from distutils.command.clean import clean
 from pathlib import Path
 import os
 import subprocess
@@ -20,11 +21,12 @@ import random
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
+from click import command
 
 
 SIDE_TONE = 650
 BAND_WIDTH = 300
-MAX_CALLERS = 3
+MAX_CALLERS = 1
 MINIMUM_CALLER_SPEED = 10
 MAXIMUM_CALLER_SPEED = 30
 MY_CALLSIGN = "K6GTE"
@@ -35,7 +37,10 @@ MY_SPEED = 30
 # Globals for IPC
 message = ""
 guessed_callsign = ""
+guessed_class = ""
+guessed_section = ""
 call_resolved = False
+result = []
 
 
 def relpath(filename):
@@ -68,6 +73,7 @@ class Ham(QRunnable):
         """Simulated Field Day participant"""
         global message
         global call_resolved
+        global result
         current_state = "CQ"
         callsign = self.generate_callsign()
         klass = self.generate_class()
@@ -194,12 +200,8 @@ class Ham(QRunnable):
                         except subprocess.TimeoutExpired:
                             print("timeout")
                     if "QRZ" in message:
-                        if (
-                            self.class_lineEdit.text() == klass
-                            and self.section_lineEdit.text() == section
-                        ):
-                            print("correct")
-            time.sleep(0.1)  # Thisi is here just so CPU cores arn't 100%
+                        result = [callsign, klass, section]
+            time.sleep(0.1)  # This is here just so CPU cores arn't 100%
 
     @staticmethod
     def generate_class():
@@ -343,9 +345,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.agn_section_pushButton.clicked.connect(self.send_repeat_section)
         self.callsign_lineEdit.textChanged.connect(self.call_changed)
         self.callsign_lineEdit.textEdited.connect(self.call_test)
-        # self.class_lineEdit.textChanged.connect(self.class_to_upper)
         self.class_lineEdit.textEdited.connect(self.class_test)
-        # self.section_lineEdit.textChanged.connect(self.section_to_upper)
         self.section_lineEdit.textEdited.connect(self.section_test)
         self.section_lineEdit.returnPressed.connect(self.send_confirm)
         self.side_tone = f"-f {SIDE_TONE}"
@@ -357,7 +357,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def spawn(self, people):
         """spin up the people"""
         threadCount = QThreadPool.globalInstance().maxThreadCount()
-        if threadCount < MAX_CALLERS:
+        if threadCount > MAX_CALLERS:
             threadCount = MAX_CALLERS
         pool = QThreadPool.globalInstance()
         for i in range(threadCount):
@@ -368,7 +368,6 @@ class MainWindow(QtWidgets.QMainWindow):
         """Callsign text field to uppercase"""
         global guessed_callsign
         guessed_callsign = self.callsign_lineEdit.text().upper()
-        # self.callsign_lineEdit.setText(guessed_callsign)
 
     def call_test(self):
         """
@@ -390,6 +389,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         Test and strip class of bad characters, advance to next input field if space pressed.
         """
+        global guessed_class
         text = self.class_lineEdit.text()
         if len(text):
             if text[-1] == " ":
@@ -399,6 +399,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 washere = self.class_lineEdit.cursorPosition()
                 cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                guessed_class = cleaned
                 self.class_lineEdit.setText(cleaned)
                 self.class_lineEdit.setCursorPosition(washere)
 
@@ -406,6 +407,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         Test and strip class of bad characters, advance to next input field if space pressed.
         """
+        global guessed_section
         text = self.section_lineEdit.text()
         if len(text):
             if text[-1] == " ":
@@ -415,6 +417,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 washere = self.section_lineEdit.cursorPosition()
                 cleaned = "".join(ch for ch in text if ch.isalnum()).upper()
+                guessed_section = cleaned
                 self.section_lineEdit.setText(cleaned)
                 self.section_lineEdit.setCursorPosition(washere)
 
@@ -428,7 +431,8 @@ class MainWindow(QtWidgets.QMainWindow):
         """Send CQ FD"""
         self.resend_timer.stop()
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
-        global message
+        global message, result
+        result = []
         command = f"CQ FD DE {MY_CALLSIGN}"
         try:
             subprocess.run(
@@ -439,7 +443,7 @@ class MainWindow(QtWidgets.QMainWindow):
         except subprocess.TimeoutExpired:
             print("timeout")
         message = f"CQ {time.clock_gettime(1)}"
-        self.resend_timer.start(20000)
+        self.resend_timer.start(10000)
 
     def send_report(self):
         """Answer callers with their callsign"""
@@ -508,16 +512,50 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message, guessed_callsign, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
+        command = f"tu {MY_CALLSIGN} fd"
+        try:
+            subprocess.run(
+                ["morse", self.side_tone, self.wpm, self.vol, command],
+                timeout=15,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            print("timeout")
+
+        self.check_result()
+
+        message = "DIE "
+        time.sleep(1)
+
         self.section_lineEdit.setText("")
         self.class_lineEdit.setText("")
         self.callsign_lineEdit.setText("")
         self.callsign_lineEdit.setFocus()
         call_resolved = False
-        message = "DIE "
-        time.sleep(1)
         message = ""
         guessed_callsign = ""
+        guessed_class = ""
+        guessed_section = ""
         self.spawn(MAX_CALLERS)
+        self.reinsert_cq_message()
+
+    def check_result(self):
+        global result
+        if guessed_callsign == result[0]:
+            a = guessed_callsign
+        else:
+            a = f"{guessed_callsign} ({result[0]})"
+        if guessed_class == result[1]:
+            b = guessed_class
+        else:
+            b = f"{guessed_class} ({result[1]})"
+        if guessed_section == result[2]:
+            c = guessed_section
+        else:
+            c = f"{guessed_section} ({result[2]})"
+
+        logline = f"{a} \t{b} \t{c}"
+        self.log_listWidget.addItem(logline)
 
     def keyPressEvent(self, event):  # pylint: disable=invalid-name
         """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
