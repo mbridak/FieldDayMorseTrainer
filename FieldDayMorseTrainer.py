@@ -8,20 +8,19 @@ Michael.Bridak@gmail.com
 # pylint: disable=c-extension-no-member
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-out-of-order
+# pylint: disable=invalid-name
+# pylint: disable=global-statement
 
-from distutils.command.clean import clean
 from pathlib import Path
 import os
 import subprocess
 import sys
 import logging
-import threading
 import time
 import random
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from click import command
 
 
 SIDE_TONE = 650
@@ -65,13 +64,14 @@ def load_fonts_from_dir(directory):
 
 
 class Ham(QRunnable):
+    """This is the simulated Field Day participant."""
+
     def __init__(self, n):
         super().__init__()
         self.n = n
 
     def run(self):
-        """Simulated Field Day participant"""
-        global message
+        """Main loop for simulant"""
         global call_resolved
         global result
         current_state = "CQ"
@@ -101,10 +101,10 @@ class Ham(QRunnable):
                 if current_state == "CQ":  # Waiting for CQ call
                     if "CQ " in message:  # different timestamp?
                         time.sleep(0.1 * random.randint(1, 5))
-                        command = f"{callsign}"
+                        morse_output = f"{callsign}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -116,10 +116,10 @@ class Ham(QRunnable):
                 if current_state == "RESOLVINGCALL" and "PARTIAL " in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
                     if error_level == 0.0:
-                        command = "rr"
+                        morse_output = "rr"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -132,10 +132,10 @@ class Ham(QRunnable):
                         and error_level < 1.0
                         or guessed_callsign == "?"
                     ):
-                        command = f"{callsign}"
+                        morse_output = f"{callsign}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -145,10 +145,10 @@ class Ham(QRunnable):
                 if current_state == "RESOLVINGCALL" and "RESPONSE " in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
                     if error_level == 0.0:
-                        command = f"tu {klass} {section}"
+                        morse_output = f"tu {klass} {section}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -158,10 +158,10 @@ class Ham(QRunnable):
                         call_resolved = True
                         continue
                     elif not call_resolved and error_level < 0.5:  # could be me
-                        command = f"de {callsign} {klass} {section}"
+                        morse_output = f"de {callsign} {klass} {section}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -170,30 +170,30 @@ class Ham(QRunnable):
 
                 if current_state == "CALLRESOLVED":
                     if "RESPONSE " in message:
-                        command = f"tu {klass} {section}"
+                        morse_output = f"tu {klass} {section}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
                     if "RESENDCLASS" in message:
-                        command = f"{klass} {klass}"
+                        morse_output = f"{klass} {klass}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
                             print("timeout")
                     if "RESENDSECTION" in message:
-                        command = f"{section} {section}"
+                        morse_output = f"{section} {section}"
                         try:
                             subprocess.run(
-                                ["morse", side_tone, wpm, vol, command],
+                                ["morse", side_tone, wpm, vol, morse_output],
                                 timeout=15,
                                 check=False,
                             )
@@ -336,7 +336,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         uic.loadUi(self.relpath("contest.ui"), self)
         self.participants = None
-        self.spawn(MAX_CALLERS)
+        self.spawn()
         self.cq_pushButton.clicked.connect(self.send_cq)
         self.report_pushButton.clicked.connect(self.send_report)
         self.confirm_pushButton.clicked.connect(self.send_confirm)
@@ -354,7 +354,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer = QtCore.QTimer()
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
 
-    def spawn(self, people):
+    def spawn(self):
         """spin up the people"""
         threadCount = QThreadPool.globalInstance().maxThreadCount()
         if threadCount > MAX_CALLERS:
@@ -425,7 +425,6 @@ class MainWindow(QtWidgets.QMainWindow):
         """if no activity from OP callers resend calls"""
         global message
         message = f"CQ {time.clock_gettime(1)}"
-        pass
 
     def send_cq(self):
         """Send CQ FD"""
@@ -433,10 +432,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
         global message, result
         result = []
-        command = f"CQ FD DE {MY_CALLSIGN}"
+        Morse_output = f"CQ FD DE {MY_CALLSIGN}"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, Morse_output],
                 timeout=15,
                 check=False,
             )
@@ -451,10 +450,10 @@ class MainWindow(QtWidgets.QMainWindow):
         global message, guessed_callsign
         guessed_callsign = self.callsign_lineEdit.text()
         self.callsign_lineEdit.setText(guessed_callsign.upper())
-        command = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
+        morse_output = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
                 timeout=15,
                 check=False,
             )
@@ -466,10 +465,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """Ask caller for his/her/non-binary call again"""
         self.resend_timer.stop()
         global message
-        command = f"{self.callsign_lineEdit.text()}"
+        morse_output = f"{self.callsign_lineEdit.text()}"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
                 timeout=15,
                 check=False,
             )
@@ -481,10 +480,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """Ask caller for class again"""
         self.resend_timer.stop()
         global message
-        command = "class?"
+        morse_output = "class?"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
                 timeout=15,
                 check=False,
             )
@@ -496,10 +495,10 @@ class MainWindow(QtWidgets.QMainWindow):
         """Ask caller for section"""
         self.resend_timer.stop()
         global message
-        command = "sect?"
+        morse_output = "sect?"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
                 timeout=15,
                 check=False,
             )
@@ -510,12 +509,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def send_confirm(self):
         """Send equivilent of TU QRZ"""
         self.resend_timer.stop()
-        global message, guessed_callsign, call_resolved
+        global message, guessed_callsign, guessed_class, guessed_section, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
-        command = f"tu {MY_CALLSIGN} fd"
+        morse_output = f"tu {MY_CALLSIGN} fd"
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, command],
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
                 timeout=15,
                 check=False,
             )
@@ -536,11 +535,11 @@ class MainWindow(QtWidgets.QMainWindow):
         guessed_callsign = ""
         guessed_class = ""
         guessed_section = ""
-        self.spawn(MAX_CALLERS)
+        self.spawn()
         self.reinsert_cq_message()
 
     def check_result(self):
-        global result
+        """See if you were right."""
         if guessed_callsign == result[0]:
             a = guessed_callsign
         else:
@@ -606,6 +605,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        """When app is closing send a message to Ham Zombies to signal them to die."""
         global message
         message = "DIE "
         time.sleep(1)
