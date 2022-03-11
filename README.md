@@ -14,7 +14,7 @@ Right now it'll let you:
 *  It/They will repeat their call if your wrong, or let you know your right.
 *  You send the exchange, they will reply with their exchange.
 *  You tell them to repeat a call, class or section, they repeat the requested info.
-*  When you get it all right, nothing happens... Really. I told you it's early days. Haven't gotten around to that yet.
+*  When you press Enter or press the F3 confirm key, a Thank You "tu" is send and the "Log" window will show if you were right. Anything wrong will display beside you input in parentheses. So if I logged "K6GTE 1F ORG" but the caller was sending "K6GTE 1C ORG", it would show as: `K6GTE 1F(1C) ORG` 
 
 ## How the sausage is made.
 It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's no settings file yet. Right now settings are just a block of code.
