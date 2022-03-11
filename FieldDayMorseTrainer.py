@@ -540,6 +540,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def check_result(self):
         """See if you were right."""
+        global result
+        if not result:
+            result = ["", "", ""]
         if guessed_callsign == result[0]:
             a = guessed_callsign
         else:
