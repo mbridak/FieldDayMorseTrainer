@@ -18,6 +18,7 @@ import sys
 import logging
 import time
 import random
+from math import ceil
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
@@ -63,12 +64,67 @@ def load_fonts_from_dir(directory):
     return families_set
 
 
+class CalculatePhraseTime:
+    """calulates the time to send a phrase"""
+
+    def __init__(self):
+        self.character_timing = {
+            "A": 5,
+            "B": 9,
+            "C": 11,
+            "D": 7,
+            "E": 1,
+            "F": 9,
+            "G": 9,
+            "H": 7,
+            "I": 3,
+            "J": 13,
+            "K": 9,
+            "L": 9,
+            "M": 7,
+            "N": 5,
+            "O": 11,
+            "P": 11,
+            "Q": 13,
+            "R": 7,
+            "S": 5,
+            "T": 3,
+            "U": 7,
+            "V": 9,
+            "W": 9,
+            "X": 11,
+            "Y": 13,
+            "Z": 11,
+            "0": 19,
+            "1": 17,
+            "2": 15,
+            "3": 13,
+            "4": 11,
+            "5": 9,
+            "6": 11,
+            "7": 13,
+            "8": 15,
+            "9": 17,
+            " ": 7,
+        }
+
+    def time_for_phrase(self, wpm: int, phrase: str) -> int:
+        """Converts a string into the miliseconds needed to send it, given the wpm"""
+        miliseconds_per_element = 60 / (50 * wpm) * 1000
+        elements = 0
+        for character in phrase.upper():
+            elements += self.character_timing[character]
+            elements += len(phrase)  # one element pause between characters
+        return ceil((miliseconds_per_element * elements) / 1000) + 2
+
+
 class Ham(QRunnable):
     """This is the simulated Field Day participant."""
 
     def __init__(self, n):
         super().__init__()
         self.n = n
+        self.timetosend = CalculatePhraseTime()
 
     def run(self):
         """Main loop for simulant"""
@@ -103,14 +159,20 @@ class Ham(QRunnable):
                     if "CQ " in message:  # different timestamp?
                         time.sleep(0.1 * random.randint(1, 5))
                         morse_output = f"{callsign}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
+                        self.log(f"{callsign}: {current_state} {time_to_send}")
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                         answered_message = message  # store timestamp
                         current_state = "RESOLVINGCALL"
 
@@ -119,14 +181,19 @@ class Ham(QRunnable):
                     self.log(f"{callsign}: {current_state} {error_level}")
                     if error_level == 0.0:
                         morse_output = "rr"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                         current_state = "CALLRESOLVED"
                         call_resolved = True
                     elif (
@@ -135,41 +202,56 @@ class Ham(QRunnable):
                         or guessed_callsign == "?"
                     ):
                         morse_output = f"{callsign}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
 
                 if current_state == "RESOLVINGCALL" and "RESPONSE " in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
                     self.log(f"{callsign}: {current_state} {error_level}")
                     if error_level == 0.0:
-                        morse_output = f"tu {klass} {section}"
+                        morse_output = f"TU {klass} {section}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                         current_state = "CALLRESOLVED"
                         call_resolved = True
                         continue
                     elif not call_resolved and error_level < 0.5:  # could be me
-                        morse_output = f"de {callsign} {klass} {section}"
+                        morse_output = f"DE {callsign} {klass} {section}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
 
                 if current_state == "RESOLVINGCALL" and "RESEND" in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
@@ -188,37 +270,53 @@ class Ham(QRunnable):
                         continue
                     if "RESPONSE " in message:
                         morse_output = f"tu {klass} {section}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                     if "RESENDCLASS" in message:
                         morse_output = f"{klass} {klass}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                     if "RESENDSECTION" in message:
                         morse_output = f"{section} {section}"
+                        time_to_send = self.timetosend.time_for_phrase(
+                            speed, morse_output
+                        )
                         try:
                             subprocess.run(
                                 ["morse", side_tone, wpm, vol, morse_output],
-                                timeout=15,
+                                timeout=time_to_send,
                                 check=False,
                             )
                         except subprocess.TimeoutExpired:
-                            print("timeout")
+                            self.log(
+                                f"Morse Timeout: '{morse_output}' [{time_to_send}]"
+                            )
                     if "QRZ" in message:
                         result = [callsign, klass, section]
             time.sleep(0.1)  # This is here just so CPU cores arn't 100%
+        self.log("DIEDIEDIE")
 
     @staticmethod
     def generate_class():
