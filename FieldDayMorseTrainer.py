@@ -346,6 +346,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.callsign_lineEdit.textChanged.connect(self.call_changed)
         self.callsign_lineEdit.textEdited.connect(self.call_test)
         self.class_lineEdit.textEdited.connect(self.class_test)
+        self.class_lineEdit.returnPressed.connect(self.send_confirm)
         self.section_lineEdit.textEdited.connect(self.section_test)
         self.section_lineEdit.returnPressed.connect(self.send_confirm)
         self.side_tone = f"-f {SIDE_TONE}"
@@ -508,6 +509,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_confirm(self):
         """Send equivilent of TU QRZ"""
+        if (
+            self.section_lineEdit.text() == ""
+            or self.class_lineEdit.text() == ""
+            or self.callsign_lineEdit.text() == ""
+        ):
+            return
         self.resend_timer.stop()
         global message, guessed_callsign, guessed_class, guessed_section, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
