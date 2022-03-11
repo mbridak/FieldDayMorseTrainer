@@ -19,9 +19,15 @@
      <rect>
       <x>20</x>
       <y>200</y>
-      <width>89</width>
+      <width>101</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
@@ -39,34 +45,59 @@
       <height>25</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+     </font>
+    </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="placeholderText">
+     <string>CallSign</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="class_lineEdit">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>170</x>
       <y>160</y>
       <width>113</width>
       <height>25</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>11</pointsize>
+     </font>
+    </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="placeholderText">
+     <string>Class</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="section_lineEdit">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>320</x>
       <y>160</y>
       <width>113</width>
       <height>25</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+     </font>
+    </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="placeholderText">
+     <string>Section</string>
     </property>
    </widget>
    <widget class="QPushButton" name="report_pushButton">
@@ -74,9 +105,15 @@
      <rect>
       <x>130</x>
       <y>200</y>
-      <width>89</width>
+      <width>101</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
@@ -90,15 +127,21 @@
      <rect>
       <x>240</x>
       <y>200</y>
-      <width>89</width>
+      <width>101</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F3: CONF</string>
+     <string>F3: TU QRZ</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_call_pushButton">
@@ -106,15 +149,21 @@
      <rect>
       <x>350</x>
       <y>200</y>
-      <width>86</width>
+      <width>101</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F4: CALL?</string>
+     <string>F4: SEND HIS</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_class_pushButton">
@@ -122,9 +171,15 @@
      <rect>
       <x>460</x>
       <y>200</y>
-      <width>86</width>
+      <width>101</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
@@ -138,15 +193,21 @@
      <rect>
       <x>570</x>
       <y>200</y>
-      <width>86</width>
+      <width>101</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F6: SECT?</string>
+     <string>F6: SEC?</string>
     </property>
    </widget>
    <widget class="QListWidget" name="log_listWidget">
@@ -157,6 +218,11 @@
       <width>661</width>
       <height>121</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+     </font>
     </property>
     <property name="focusPolicy">
      <enum>Qt::NoFocus</enum>
