@@ -27,7 +27,7 @@ SIDE_TONE = 650
 BAND_WIDTH = 300
 MAX_CALLERS = 1
 MINIMUM_CALLER_SPEED = 10
-MAXIMUM_CALLER_SPEED = 30
+MAXIMUM_CALLER_SPEED = 25
 MY_CALLSIGN = "K6GTE"
 MY_CLASS = "1B"
 MY_SECTION = "ORG"
@@ -555,6 +555,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         logline = f"{a} \t{b} \t{c}"
         self.log_listWidget.addItem(logline)
+        self.log_listWidget.scrollToBottom()
 
     def keyPressEvent(self, event):  # pylint: disable=invalid-name
         """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
