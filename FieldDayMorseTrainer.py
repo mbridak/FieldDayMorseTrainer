@@ -25,8 +25,8 @@ from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
 
 SIDE_TONE = 650
-BAND_WIDTH = 300
-MAX_CALLERS = 1
+BAND_WIDTH = 500
+MAX_CALLERS = 3
 MINIMUM_CALLER_SPEED = 10
 MAXIMUM_CALLER_SPEED = 25
 MY_CALLSIGN = "K6GTE"
@@ -198,7 +198,7 @@ class Ham(QRunnable):
                         call_resolved = True
                     elif (
                         not call_resolved
-                        and error_level < 8.0
+                        and error_level < 0.8
                         or guessed_callsign == "?"
                     ):
                         morse_output = f"{callsign}"
