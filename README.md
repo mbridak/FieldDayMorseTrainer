@@ -1,6 +1,8 @@
 # Field Day Morse Trainer
 Simulates working Morse (CW), during Field Day. At least, that's the plan.
 
+![main window](pics/mainscreen.png)
+
 ## Why?
 Well, because I still suck at CW. I'm much better at writing code than copying CW. And if you look at some of my code... You'll think WOW! You must really suck at CW. 
 
