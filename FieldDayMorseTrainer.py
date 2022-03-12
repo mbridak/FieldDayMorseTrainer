@@ -106,6 +106,7 @@ class CalculatePhraseTime:
             "8": 15,
             "9": 17,
             " ": 7,
+            "?": 15,
         }
 
     def time_for_phrase(self, wpm: int, phrase: str) -> int:
@@ -464,6 +465,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.class_lineEdit.returnPressed.connect(self.send_confirm)
         self.section_lineEdit.textEdited.connect(self.section_test)
         self.section_lineEdit.returnPressed.connect(self.send_confirm)
+        self.timetosend = CalculatePhraseTime()
         self.side_tone = f"-f {SIDE_TONE}"
         self.wpm = f"-w {MY_SPEED}"
         self.vol = "-v 0.3"
@@ -548,15 +550,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
         global message, result
         result = []
-        Morse_output = f"CQ FD DE {MY_CALLSIGN}"
+        morse_output = f"CQ FD DE {MY_CALLSIGN}"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
-                ["morse", self.side_tone, self.wpm, self.vol, Morse_output],
-                timeout=15,
+                ["morse", self.side_tone, self.wpm, self.vol, morse_output],
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
         message = f"CQ {time.clock_gettime(1)}"
         self.resend_timer.start(10000)
 
@@ -567,14 +570,15 @@ class MainWindow(QtWidgets.QMainWindow):
         guessed_callsign = self.callsign_lineEdit.text()
         self.callsign_lineEdit.setText(guessed_callsign.upper())
         morse_output = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
-                timeout=15,
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
         message = f"RESPONSE {time.clock_gettime(1)}"
 
     def send_repeat_call(self):
@@ -582,14 +586,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = f"{self.callsign_lineEdit.text()}"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
-                timeout=15,
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
         message = f"PARTIAL {time.clock_gettime(1)}"
 
     def send_repeat_class(self):
@@ -597,14 +602,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = "class?"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
-                timeout=15,
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
         message = f"RESENDCLASS {time.clock_gettime(1)}"
 
     def send_repeat_section(self):
@@ -612,14 +618,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = "sect?"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
-                timeout=15,
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
         message = f"RESENDSECTION {time.clock_gettime(1)}"
 
     def send_confirm(self):
@@ -634,14 +641,15 @@ class MainWindow(QtWidgets.QMainWindow):
         global message, guessed_callsign, guessed_class, guessed_section, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
         morse_output = f"tu {MY_CALLSIGN} fd"
+        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
-                timeout=15,
+                timeout=time_to_send,
                 check=False,
             )
         except subprocess.TimeoutExpired:
-            print("timeout")
+            self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
 
         self.check_result()
 
