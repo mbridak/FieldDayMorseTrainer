@@ -766,7 +766,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 if __name__ == "__main__":
     if Path("./debug").exists():
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.WARNING)
     app = QtWidgets.QApplication(sys.argv)
