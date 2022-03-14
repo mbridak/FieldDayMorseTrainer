@@ -40,7 +40,7 @@ guessed_callsign = ""
 guessed_class = ""
 guessed_section = ""
 call_resolved = False
-result = []
+result = ["", "", ""]
 
 
 def relpath(filename):
@@ -201,6 +201,7 @@ class Ham(QRunnable):
                         not call_resolved
                         and error_level < 0.8
                         or guessed_callsign == "?"
+                        or guessed_callsign in callsign
                     ):
                         morse_output = f"{callsign}"
                         time_to_send = self.timetosend.time_for_phrase(
@@ -221,6 +222,7 @@ class Ham(QRunnable):
                     error_level = self.run_ltest(callsign, guessed_callsign)
                     self.log(f"{callsign}: {current_state} {error_level}")
                     if error_level == 0.0:
+                        result = [callsign, klass, section]
                         morse_output = f"TU {klass} {section}"
                         time_to_send = self.timetosend.time_for_phrase(
                             speed, morse_output
@@ -238,7 +240,11 @@ class Ham(QRunnable):
                         current_state = "CALLRESOLVED"
                         call_resolved = True
                         continue
-                    elif not call_resolved and error_level < 0.5:  # could be me
+                    elif (
+                        not call_resolved
+                        and error_level < 0.5
+                        or guessed_callsign in callsign
+                    ):  # could be me
                         morse_output = f"DE {callsign} {klass} {section}"
                         time_to_send = self.timetosend.time_for_phrase(
                             speed, morse_output
@@ -263,6 +269,7 @@ class Ham(QRunnable):
 
                 if current_state == "CALLRESOLVED":
                     self.log(f"{callsign}: {current_state}")
+                    result = [callsign, klass, section]
                     if "PARTIAL " in message:
                         # If he's resending a callsign it's not resolved
                         current_state = "RESOLVINGCALL"
@@ -631,6 +638,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_confirm(self):
         """Send equivilent of TU QRZ"""
+        global result
         if (
             self.section_lineEdit.text() == ""
             or self.class_lineEdit.text() == ""
@@ -652,7 +660,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.log(f"Morse Timeout: '{morse_output}' [{time_to_send}]")
 
         self.check_result()
-
+        result = ["", "", ""]
         message = "DIE "
         time.sleep(1)
 
