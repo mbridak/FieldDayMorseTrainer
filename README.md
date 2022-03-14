@@ -20,7 +20,7 @@ Right now it'll let you:
 *  You send the exchange, they will reply with their exchange.
 *  You tell them to repeat a call, class or section, they repeat the requested info.
 *  When you press Enter or press the F3 confirm key, a Thank You "tu" is sent and the "Log" window will show if you were right. Anything wrong will display beside your input in parentheses. So if I logged "K6GTE 1F ORG", but the caller was sending "K6GTE 1C ORG", it would show as: `K6GTE 1F(1C) ORG`.
-*  No Score is kept at the moment. You just basque in the glow of your participation trophy.
+*  No Score is kept at the moment. You just ~~basque~~ bask in the glow of your participation trophy.
 
 ## How the sausage is made.
 It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's no settings file yet. Right now settings are just a block of code.
