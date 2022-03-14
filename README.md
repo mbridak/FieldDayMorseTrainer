@@ -43,7 +43,7 @@ I'm rather new to Threading. And well, it might show. I'm sure what I'm doing pr
 
 So when you send your CQ, maybe several threads will respond with their calls. They then listen for your response. And if it's close enough they will send it again. So you kind of thin the herd. All the normal strategies should work. So if you get a pileup, you can just send a 6 or a K or something if you can't pick out character from the 'wall of sound'.
 
-These threads spawn a copy of the `morse` program to generate the audio. Sometimes something goes wrong with one of them and it doesn't send anything and hangs. I don't know why, but hey, it's like real Field Day where the guy/gal will just give up and turn the dial. To prevent these zombie processes, the subprocess has a timeout of 15 seconds. And at the end of the contact, when you send the confirmation/tu/qrz, the threads are told to die and new ones are spawned.
+These threads spawn a copy of the `morse` program to generate the audio. Sometimes something goes wrong with one of them and it doesn't send anything and hangs. At first I thought it was something I was doing wrong with Threading and calling the external program. However I can get the morse program to hang just by calling it from the command line repeatedly. But hey, it's like real Field Day where the guy/gal will just give up and turn the dial. To account for this problem, I now calculate the length of time it should take given the sending speed for the message to be sent, and set a timeout timer to kill the program if it takes too long. And at the end of the contact, when you send the confirmation/tu/qrz, the threads are told to die and new ones are spawned.
 
 All this may change. Again, early days.
 
@@ -51,5 +51,5 @@ All this may change. Again, early days.
 
 *  Python, something 3.8 or later would be nice.
 *  The PyQt5 library, either pip install it, or apt install python3-pyqt5. Not sure what you Arch people do, maybe pray...
-*  The Linux program `morse`.
+*  The Linux program `morse`, `sudo apt install morse` YMMV.
 
