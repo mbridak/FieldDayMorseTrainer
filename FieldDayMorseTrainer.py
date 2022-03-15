@@ -19,20 +19,12 @@ import logging
 import time
 import random
 from math import ceil
+from json import loads
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 
-
-SIDE_TONE = 650
-BAND_WIDTH = 500
-MAX_CALLERS = 3
-MINIMUM_CALLER_SPEED = 10
-MAXIMUM_CALLER_SPEED = 25
-MY_CALLSIGN = "K6GTE"
-MY_CLASS = "1B"
-MY_SECTION = "ORG"
-MY_SPEED = 30
+settings = None
 
 # Globals for IPC
 message = ""
@@ -135,9 +127,14 @@ class Ham(QRunnable):
         callsign = self.generate_callsign()
         klass = self.generate_class()
         section = self.generate_section(callsign)
-        half_bandwidth = BAND_WIDTH / 2
-        pitch = random.randint(SIDE_TONE - half_bandwidth, SIDE_TONE + half_bandwidth)
-        speed = random.randint(MINIMUM_CALLER_SPEED, MAXIMUM_CALLER_SPEED)
+        half_bandwidth = settings["BAND_WIDTH"] / 2
+        pitch = random.randint(
+            settings["SIDE_TONE"] - half_bandwidth,
+            settings["SIDE_TONE"] + half_bandwidth,
+        )
+        speed = random.randint(
+            settings["MINIMUM_CALLER_SPEED"], settings["MAXIMUM_CALLER_SPEED"]
+        )
         volume = 0.3
         side_tone = f"-f {pitch}"
         wpm = f"-w {speed}"
@@ -473,8 +470,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.section_lineEdit.textEdited.connect(self.section_test)
         self.section_lineEdit.returnPressed.connect(self.send_confirm)
         self.timetosend = CalculatePhraseTime()
-        self.side_tone = f"-f {SIDE_TONE}"
-        self.wpm = f"-w {MY_SPEED}"
+        self.side_tone = f"-f {settings['SIDE_TONE']}"
+        self.wpm = f"-w {settings['MY_SPEED']}"
         self.vol = "-v 0.3"
         self.resend_timer = QtCore.QTimer()
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
@@ -482,8 +479,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def spawn(self):
         """spin up the people"""
         threadCount = QThreadPool.globalInstance().maxThreadCount()
-        if threadCount > MAX_CALLERS:
-            threadCount = MAX_CALLERS
+        if threadCount > settings["MAX_CALLERS"]:
+            threadCount = settings["MAX_CALLERS"]
         pool = QThreadPool.globalInstance()
         for i in range(threadCount):
             ham = Ham(i)
@@ -557,8 +554,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.timeout.connect(self.reinsert_cq_message)
         global message, result
         result = []
-        morse_output = f"CQ FD DE {MY_CALLSIGN}"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        morse_output = f"CQ FD DE {settings['MY_CALLSIGN']}"
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -576,8 +575,12 @@ class MainWindow(QtWidgets.QMainWindow):
         global message, guessed_callsign
         guessed_callsign = self.callsign_lineEdit.text()
         self.callsign_lineEdit.setText(guessed_callsign.upper())
-        morse_output = f"{guessed_callsign} {MY_CLASS} {MY_SECTION}"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        morse_output = (
+            f"{guessed_callsign} {settings['MY_CLASS']} {settings['MY_SECTION']}"
+        )
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -593,7 +596,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = f"{self.callsign_lineEdit.text()}"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -609,7 +614,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = "class?"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -625,7 +632,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message
         morse_output = "sect?"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -648,8 +657,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resend_timer.stop()
         global message, guessed_callsign, guessed_class, guessed_section, call_resolved
         message = f"QRZ {time.clock_gettime(1)}"
-        morse_output = f"tu {MY_CALLSIGN} fd"
-        time_to_send = self.timetosend.time_for_phrase(MY_SPEED, morse_output)
+        morse_output = f"tu {settings['MY_CALLSIGN']} fd"
+        time_to_send = self.timetosend.time_for_phrase(
+            settings["MY_SPEED"], morse_output
+        )
         try:
             subprocess.run(
                 ["morse", self.side_tone, self.wpm, self.vol, morse_output],
@@ -777,6 +788,10 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.WARNING)
+
+    with open("./fdm_settings.json", "rt", encoding="utf-8") as file_descriptor:
+        settings = loads(file_descriptor.read())
+
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
     font_dir = relpath("font")
