@@ -1,0 +1,11 @@
+{
+    "SIDE_TONE": 650,
+    "BAND_WIDTH": 500,
+    "MAX_CALLERS": 1,
+    "MINIMUM_CALLER_SPEED": 10,
+    "MAXIMUM_CALLER_SPEED": 25,
+    "MY_CALLSIGN": "K6GTE",
+    "MY_CLASS": "1B",
+    "MY_SECTION": "ORG",
+    "MY_SPEED": 30
+}
