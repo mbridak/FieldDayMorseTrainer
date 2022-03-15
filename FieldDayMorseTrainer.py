@@ -135,7 +135,8 @@ class Ham(QRunnable):
         speed = random.randint(
             settings["MINIMUM_CALLER_SPEED"], settings["MAXIMUM_CALLER_SPEED"]
         )
-        volume = 0.3
+        volume = random.uniform(0.1, 0.3)
+
         side_tone = f"-f {pitch}"
         wpm = f"-w {speed}"
         vol = f"-v {volume}"
@@ -155,7 +156,7 @@ class Ham(QRunnable):
                 if current_state == "CQ":  # Waiting for CQ call
                     self.log(f"{callsign}: {current_state}")
                     if "CQ " in message:  # different timestamp?
-                        time.sleep(0.1 * random.randint(1, 5))
+                        time.sleep(0.1 * random.randint(1, 8))
                         morse_output = f"{callsign}"
                         time_to_send = self.timetosend.time_for_phrase(
                             speed, morse_output
