@@ -23,19 +23,7 @@ Right now it'll let you:
 *  No Score is kept at the moment. You just ~~basque~~ bask in the glow of your participation trophy.
 
 ## How the sausage is made.
-It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's no settings file yet. Right now settings are just a block of code.
-
-```
-SIDE_TONE = 650
-BAND_WIDTH = 300
-MAX_CALLERS = 3
-MINIMUM_CALLER_SPEED = 10
-MAXIMUM_CALLER_SPEED = 30
-MY_CALLSIGN = "K6GTE"
-MY_CLASS = "1B"
-MY_SECTION = "ORG"
-MY_SPEED = 30
-```
+It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's a settings file, fdm_settings.json, where you can customize you sessions. Settings for your preferred sidetone, filter bandwidth, how many callers you want to respond to your CQ, their minimum and maximum speeds.  
 
 When the program loads it will spawn from 1 to MAX_CALLERS threads. These threads are the simulated Field Day participants that you will be interacting with. Each one chooses a random sending speed and frequency. They get a randomly generated US Callsign and Class. The random Section is based on their call district.
 
@@ -43,7 +31,7 @@ I'm rather new to Threading. And well, it might show. I'm sure what I'm doing pr
 
 So when you send your CQ, maybe several threads will respond with their calls. They then listen for your response. And if it's close enough they will send it again. So you kind of thin the herd. All the normal strategies should work. So if you get a pileup, you can just send a 6 or a K or something if you can't pick out character from the 'wall of sound'.
 
-These threads spawn a copy of the `morse` program to generate the audio. Sometimes something goes wrong with one of them and it doesn't send anything and hangs. At first I thought it was something I was doing wrong with Threading and calling the external program. However I can get the morse program to hang just by calling it from the command line repeatedly. But hey, it's like real Field Day where the guy/gal will just give up and turn the dial. To account for this problem, I now calculate the length of time it should take given the sending speed for the message to be sent, and set a timeout timer to kill the program if it takes too long. And at the end of the contact, when you send the confirmation/tu/qrz, the threads are told to die and new ones are spawned.
+These threads spawn a copy of the `morse` program to generate the audio. Sometimes something goes wrong with one of them and it doesn't send anything and hangs. At first I thought it was something I was doing wrong with Threading and calling the external program. However I can get the morse program to hang just by calling it from the command line repeatedly. But hey, it's like real Field Day where the guy/gal will just give up and turn the dial. To account for this problem, I now calculate the length of time it should take given the sending speed for the message to be sent, and set a timeout timer to kill the morse program if it takes too long. And at the end of the contact, when you send the confirmation/tu/qrz, the threads are told to die and new ones are spawned.
 
 All this may change. Again, early days.
 
