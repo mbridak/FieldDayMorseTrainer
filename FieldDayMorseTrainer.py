@@ -404,7 +404,7 @@ class Ham(QRunnable):
             "1": "CT RI EMA VT ME WMA NH",
             "2": "ENY NNY NLI SNJ NNJ WNY",
             "3": "DE MDC EPA WPA",
-            "4": "QL SC GA SFL KY TN NC VA NFL VI PR WCF",
+            "4": "AL SC GA SFL KY TN NC VA NFL VI PR WCF",
             "5": "AR NTX LA OK MS STX NM WTX",
             "6": "EBA SCV LAX SDG ORG SF PAC SJV SB SV",
             "7": "AK NV AZ OR EWA UT ID WWA MT WY",
