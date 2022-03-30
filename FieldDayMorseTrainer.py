@@ -548,11 +548,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """if no activity from OP callers resend calls"""
         global message
         message = f"CQ {time.clock_gettime(1)}"
+        self.resend_timer.start(10000)
 
     def send_cq(self):
         """Send CQ FD"""
         self.resend_timer.stop()
-        self.resend_timer.timeout.connect(self.reinsert_cq_message)
         global message, result
         result = []
         morse_output = f"CQ FD DE {settings['MY_CALLSIGN']}"
@@ -648,6 +648,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_confirm(self):
         """Send equivilent of TU QRZ"""
+        self.resend_timer.stop()
         global result
         if (
             self.section_lineEdit.text() == ""
