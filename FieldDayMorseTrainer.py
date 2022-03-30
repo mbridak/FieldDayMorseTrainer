@@ -177,7 +177,7 @@ class Ham(QRunnable):
 
                 if current_state == "RESOLVINGCALL" and "PARTIAL " in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
-                    self.log(f"{callsign}: {current_state} {error_level}")
+                    self.log(f"{callsign}: {current_state} {message} {error_level}")
                     if error_level == 0.0:
                         morse_output = "rr"
                         time_to_send = self.timetosend.time_for_phrase(
@@ -195,6 +195,8 @@ class Ham(QRunnable):
                             )
                         current_state = "CALLRESOLVED"
                         call_resolved = True
+                        answered_message = message
+                        continue
                     elif (
                         not call_resolved
                         and error_level < 0.8
@@ -218,7 +220,7 @@ class Ham(QRunnable):
 
                 if current_state == "RESOLVINGCALL" and "RESPONSE " in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
-                    self.log(f"{callsign}: {current_state} {error_level}")
+                    self.log(f"{callsign}: {current_state} {message} {error_level}")
                     if error_level == 0.0:
                         result = [callsign, klass, section]
                         morse_output = f"TU {klass} {section}"
@@ -260,13 +262,13 @@ class Ham(QRunnable):
 
                 if current_state == "RESOLVINGCALL" and "RESEND" in message:
                     error_level = self.run_ltest(callsign, guessed_callsign)
-                    self.log(f"{callsign}: {current_state} {error_level}")
+                    self.log(f"{callsign}: {current_state} {message} {error_level}")
                     if error_level < 0.25:  # if close he must be talking to me right?
                         current_state = "CALLRESOLVED"
                         call_resolved = True
 
                 if current_state == "CALLRESOLVED":
-                    self.log(f"{callsign}: {current_state}")
+                    self.log(f"{callsign}: {current_state} {message}")
                     result = [callsign, klass, section]
                     if "PARTIAL " in message:
                         # If he's resending a callsign it's not resolved
