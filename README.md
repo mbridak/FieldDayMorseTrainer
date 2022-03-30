@@ -9,6 +9,12 @@ Well, because I still suck at CW. I'm much better at writing code than copying C
 ## It's very early days.
 Really early. This aint no G4FON Contest Trainer. It's not even fully functional. But I had a day off work yesterday and this is what I did in-between shuttling kids back and forth from school.
 
+## Application not responding
+
+If you're on a Gnome desktop and get an application not responding pop up. Gnome seems to be a bit aggressive. You can dial it back a bit by typing this into a command line.
+  
+`gsettings set org.gnome.mutter check-alive-timeout 60000`
+
 ### Update
 It's actually not that bad now. After fixing a transposition in the check for error_level, the ham robots actually can figure out that you're not talking to them and stop being LIDS.
 
