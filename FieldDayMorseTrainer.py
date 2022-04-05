@@ -404,7 +404,15 @@ class Ham(QRunnable):
         if "A" in callsign[0]:
             suffix_length = random.randint(1, 2)
         else:
-            suffix_length = random.randint(1, 3)
+            length = [
+                1,
+                2,
+                2,
+                3,
+                3,
+                3,
+            ]  # Stupid way to get a weighted result. But I'm stupid so it's normal.
+            suffix_length = length[random.randint(0, 5)]
 
         for unused_variable in range(suffix_length):
             callsign += letters[random.randint(0, 25)]
