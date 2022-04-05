@@ -19,7 +19,7 @@ import logging
 import time
 import random
 from math import ceil
-from json import loads
+from json import loads, dumps
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtCore import QDir, Qt, QRunnable, QThreadPool
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
@@ -33,6 +33,18 @@ guessed_class = ""
 guessed_section = ""
 call_resolved = False
 result = ["", "", ""]
+
+settings = {
+    "SIDE_TONE": 650,
+    "BAND_WIDTH": 500,
+    "MAX_CALLERS": 3,
+    "MINIMUM_CALLER_SPEED": 10,
+    "MAXIMUM_CALLER_SPEED": 25,
+    "MY_CALLSIGN": "K6GTE",
+    "MY_CLASS": "1B",
+    "MY_SECTION": "ORG",
+    "MY_SPEED": 30,
+}
 
 
 def relpath(filename):
@@ -124,6 +136,7 @@ class Ham(QRunnable):
         global call_resolved
         global result
         current_state = "CQ"
+        random.seed()
         callsign = self.generate_callsign()
         klass = self.generate_class()
         section = self.generate_section(callsign)
@@ -156,7 +169,9 @@ class Ham(QRunnable):
                 if current_state == "CQ":  # Waiting for CQ call
                     self.log(f"{callsign}: {current_state}")
                     if "CQ " in message:  # different timestamp?
-                        time.sleep(0.1 * random.randint(1, 8))
+                        time.sleep(
+                            0.1 * random.randint(1, 10)
+                        )  # slightly random start time
                         morse_output = f"{callsign}"
                         time_to_send = self.timetosend.time_for_phrase(
                             speed, morse_output
@@ -717,6 +732,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """This extends QT's KeyPressEvent, handle tab, esc and function keys"""
         global message
         event_key = event.key()
+        self.log(event_key)
         if event_key == Qt.Key_Escape:
             self.section_lineEdit.setText("")
             self.class_lineEdit.setText("")
@@ -793,9 +809,16 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.WARNING)
 
-    with open("./fdm_settings.json", "rt", encoding="utf-8") as file_descriptor:
-        settings = loads(file_descriptor.read())
-
+    try:
+        if os.path.exists("./fdm_settings.json"):
+            with open("./fdm_settings.json", "rt", encoding="utf-8") as file_descriptor:
+                settings = loads(file_descriptor.read())
+        else:
+            with open("./fdm_settings.json", "wt", encoding="utf-8") as file_descriptor:
+                file_descriptor.write(dumps(settings, indent=4))
+                logging.info("writing: %s", settings)
+    except IOError as exception:
+        logging.critical("Reading Preferences: %s", exception)
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
     font_dir = relpath("font")
