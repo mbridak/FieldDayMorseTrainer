@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=FieldDayMorseTrainer
+StartupWMClass=FieldDayMorseTrainer
+GenericName=FieldDayMorseTrainer
+Comment=Amateur Radio Communications
+Exec=FieldDayMorseTrainer
+Icon=k6gte-FieldDayMorseTrainer
+Terminal=false
+Type=Application
+Categories=HamRadio;

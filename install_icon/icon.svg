@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="icon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="true"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showborder="false"
+     inkscape:zoom="1"
+     inkscape:cx="279.5"
+     inkscape:cy="400.5"
+     inkscape:window-width="1550"
+     inkscape:window-height="836"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g7332"
+       transform="matrix(0.36876678,0,0,0.36876678,44.086465,57.050229)"
+       inkscape:export-filename="/home/mbridak/FieldDayMorse.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96">
+      <circle
+         style="fill:#fffff0;fill-opacity:1;stroke:#ff4a00;stroke-width:0.264583"
+         id="path846"
+         cx="92.801208"
+         cy="113.33841"
+         r="22.827116" />
+      <g
+         id="g7324"
+         transform="matrix(1.2580369,0,0,1.2580369,1.52754,-101.66513)">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+           x="60.300014"
+           y="167.31087"
+           id="text3556"><tspan
+             sodipodi:role="line"
+             style="stroke-width:0.264583"
+             x="60.300014"
+             y="167.31087"
+             id="tspan3558">Field</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+           x="60.261257"
+           y="180.33655"
+           id="text3894"><tspan
+             sodipodi:role="line"
+             id="tspan3892"
+             style="stroke-width:0.264583"
+             x="60.261257"
+             y="180.33655">Day!</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>
