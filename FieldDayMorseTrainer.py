@@ -639,7 +639,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Ask caller for class again"""
         self.resend_timer.stop()
         global message
-        morse_output = "class?"
+        morse_output = "cls?"
         time_to_send = self.timetosend.time_for_phrase(
             settings["MY_SPEED"], morse_output
         )
@@ -657,7 +657,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Ask caller for section"""
         self.resend_timer.stop()
         global message
-        morse_output = "sect?"
+        morse_output = "sec?"
         time_to_send = self.timetosend.time_for_phrase(
             settings["MY_SPEED"], morse_output
         )
