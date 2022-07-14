@@ -25,11 +25,11 @@ Right now it'll let you:
 *  It/They will repeat their call if your wrong, or let you know your right.
 *  You send the exchange, they will reply with their exchange.
 *  You tell them to repeat a call, class or section, they repeat the requested info.
-*  When you press Enter or press the F3 confirm key, a Thank You "tu" is sent and the "Log" window will show if you were right. Anything wrong will display beside your input in parentheses. So if I logged "K6GTE 1F ORG", but the caller was sending "K6GTE 1C ORG", it would show as: `K6GTE 1F(1C) ORG`.
-*  No Score is kept at the moment. You just ~~basque~~ bask in the glow of your participation trophy.
+*  When you press Enter or press the F4 confirm key, a Thank You "tu" is sent and the "Log" window will show if you were right. Anything wrong will display beside your input in parentheses. So if I logged "K6GTE 1F ORG", but the caller was sending "K6GTE 1C ORG", it would show as: `K6GTE 1F(1C) ORG`.
+*  No Score is kept at the moment. You just bask in the glow of your participation trophy.
 
 ## How the sausage is made.
-It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's a settings file, fdm_settings.json, where you can customize you sessions. Settings for your preferred sidetone, filter bandwidth, how many callers you want to respond to your CQ, their minimum and maximum speeds.  
+It's written in Python. I uses Qt5 for windowing/buttons. It uses the Linux program `morse` to generate the audio. There's a settings file, fdm_settings.json, where you can customize your sessions. Settings for your preferred sidetone, filter bandwidth, how many callers you want to respond to your CQ, their minimum and maximum speeds.  
 
 When the program loads it will spawn from 1 to MAX_CALLERS threads. These threads are the simulated Field Day participants that you will be interacting with. Each one chooses a random sending speed and frequency. They get a randomly generated US Callsign and Class. The random Section is based on their call district.
 
@@ -46,4 +46,3 @@ All this may change. Again, early days.
 *  Python, something 3.8 or later would be nice.
 *  The PyQt5 library, either pip install it, or apt install python3-pyqt5. Not sure what you Arch people do, maybe pray...
 *  The Linux program `morse`, `sudo apt install morse` YMMV.
-
