@@ -788,7 +788,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if event_key == Qt.Key_F6:
             self.send_repeat_section()
             return
-        if event_key == Qt.Key_F6:
+        if event_key == Qt.Key_F9:
             self.send_nil()
             return
         if event_key == Qt.Key_F12:
