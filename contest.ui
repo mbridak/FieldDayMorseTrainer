@@ -107,28 +107,6 @@ color: rgb(211, 215, 207);</string>
    <widget class="QPushButton" name="report_pushButton">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>200</y>
-      <width>101</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>JetBrains Mono</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
-    </property>
-    <property name="text">
-     <string>F2: REPORT</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="confirm_pushButton">
-    <property name="geometry">
-     <rect>
       <x>240</x>
       <y>200</y>
       <width>101</width>
@@ -145,13 +123,35 @@ color: rgb(211, 215, 207);</string>
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F3: TU QRZ</string>
+     <string>F3: REPORT</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="confirm_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>200</y>
+      <width>101</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>JetBrains Mono</family>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="text">
+     <string>F4: TU QRZ</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_call_pushButton">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>130</x>
       <y>200</y>
       <width>101</width>
       <height>26</height>
@@ -167,7 +167,7 @@ color: rgb(211, 215, 207);</string>
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F4: SEND HIS</string>
+     <string>F2: SEND HIS</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_class_pushButton">

@@ -714,6 +714,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.spawn()
         self.reinsert_cq_message()
 
+    def send_nil(self):
+        """Send not in log"""
+        global message
+        message = "DIE "
+        time.sleep(1)
+        self.spawn()
+
     def check_result(self):
         """See if you were right."""
         global result
@@ -766,13 +773,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if event_key == Qt.Key_F1:
             self.send_cq()
             return
-        if event_key == Qt.Key_F2:
+        if event_key == Qt.Key_F3:
             self.send_report()
             return
-        if event_key == Qt.Key_F3:
+        if event_key == Qt.Key_F4:
             self.send_confirm()
             return
-        if event_key == Qt.Key_F4:
+        if event_key == Qt.Key_F2:
             self.send_repeat_call()
             return
         if event_key == Qt.Key_F5:
@@ -780,6 +787,9 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         if event_key == Qt.Key_F6:
             self.send_repeat_section()
+            return
+        if event_key == Qt.Key_F6:
+            self.send_nil()
             return
         if event_key == Qt.Key_F12:
             message = "DIE "  # kill off the hams
