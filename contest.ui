@@ -37,7 +37,7 @@ color: rgb(211, 215, 207);</string>
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F1: CQ</string>
+     <string>F1: CQ FD</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="callsign_lineEdit">
@@ -167,7 +167,7 @@ color: rgb(211, 215, 207);</string>
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F2: SEND HIS</string>
+     <string>F2: HIS CALL</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_class_pushButton">
@@ -189,7 +189,7 @@ color: rgb(211, 215, 207);</string>
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>F5: CLASS?</string>
+     <string>F5: CLS?</string>
     </property>
    </widget>
    <widget class="QPushButton" name="agn_section_pushButton">
